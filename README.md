@@ -94,16 +94,7 @@ Mostly yes, but a few things matter:
    throttled. The code already treats archiving as best-effort so it never
    blocks the health check itself.
 
-## What to highlight on your resume / in interviews
 
-- Content-diff detection that filters signal from noise (word-level Jaccard
-  distance) instead of naive string comparison
-- A scheduling system that only processes "due" work instead of re-checking
-  everything on every tick
-- Third-party API integration with graceful degradation (archiving failures
-  never break the core feature)
-- Clear separation between manual (on-demand) and scheduled (background)
-  code paths sharing the same core logic
 
 ## Suggested next steps
 

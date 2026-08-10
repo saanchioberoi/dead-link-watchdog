@@ -72,8 +72,11 @@ const ARCHIVE_TIMEOUT_MS = 30000; // Save Page Now is often slow; give it more r
 
 async function archiveToWayback(url) {
   try {
+    // IMPORTANT: the target URL goes after /save/ as-is, NOT encodeURIComponent'd.
+    // Encoding it (https%3A%2F%2F...) doesn't match a real archive.org path and
+    // just gets you a 404 instead of an actual archive attempt.
     const res = await fetchWithTimeout(
-      `https://web.archive.org/save/${encodeURIComponent(url)}`,
+      `https://web.archive.org/save/${url}`,
       { method: "GET" },
       ARCHIVE_TIMEOUT_MS
     );

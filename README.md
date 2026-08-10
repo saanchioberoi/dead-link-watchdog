@@ -20,6 +20,26 @@ find out the hard way. Each at-risk link is also snapshotted to the
   (Alive / Changed / Dead), trigger a manual check, and jump to the archived
   snapshot.
 
+## One-time setup: archive.org API keys (required for archiving)
+
+Since 2023, the Wayback Machine's Save Page Now no longer reliably accepts
+anonymous requests. You need a free archive.org account:
+
+1. Sign up at https://archive.org/account/signup (free, instant).
+2. Once logged in, go to https://archive.org/account/s3.php to generate
+   your API keys — you'll get an **access key** and a **secret key**.
+3. Set these as environment variables wherever you run the app:
+   - `ARCHIVE_ACCESS_KEY`
+   - `ARCHIVE_SECRET_KEY`
+
+Locally, create a `.env` file in `backend/` (or export them in your shell)
+and load them before `npm start`. On Render: Dashboard → your service →
+Environment tab → Add Environment Variable, for both keys, then redeploy.
+
+Without these keys, link health checks (alive/dead/changed) still work —
+only the Wayback archiving step is skipped, and the app will show
+"No archive.org API keys configured" instead of a broken link.
+
 ## Run it locally
 
 You'll need Node.js 18+ installed.

@@ -44,9 +44,9 @@ function diffRatio(oldText, newText) {
   return 1 - similarity; // 0 = identical, 1 = completely different
 }
 
-async function fetchWithTimeout(url, opts = {}) {
+async function fetchWithTimeout(url, opts = {}, timeoutMs = FETCH_TIMEOUT_MS) {
   const controller = new AbortController();
-  const t = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const t = setTimeout(() => controller.abort(), timeoutMs);
   try {
     return await fetch(url, {
       ...opts,
@@ -68,18 +68,23 @@ async function fetchWithTimeout(url, opts = {}) {
  * public archive exists even if our own DB/storage is lost.
  * Best-effort: failures here should never block the health check itself.
  */
+const ARCHIVE_TIMEOUT_MS = 30000; // Save Page Now is often slow; give it more room than a normal fetch
+
 async function archiveToWayback(url) {
   try {
     const res = await fetchWithTimeout(
       `https://web.archive.org/save/${encodeURIComponent(url)}`,
-      { method: "GET" }
+      { method: "GET" },
+      ARCHIVE_TIMEOUT_MS
     );
     if (res.ok) {
-      return `https://web.archive.org/web/${Date.now()}/${url}`;
+      return { archiveUrl: `https://web.archive.org/web/${Date.now()}/${url}`, error: null };
     }
-    return null;
-  } catch {
-    return null; // archiving is a bonus, not a blocker
+    return { archiveUrl: null, error: `Wayback returned HTTP ${res.status}` };
+  } catch (err) {
+    // archiving is a bonus, not a blocker — but we still report why it failed
+    const reason = err.name === "AbortError" ? "Wayback request timed out" : err.message;
+    return { archiveUrl: null, error: reason };
   }
 }
 
@@ -96,6 +101,7 @@ async function checkLink(link) {
     snapshotText: link.last_snapshot_text,
     changeRatio: 0,
     archiveUrl: link.last_archive_url,
+    archiveError: null,
     error: null,
   };
 
@@ -130,8 +136,9 @@ async function checkLink(link) {
     // Only spend an archive call when something is new or different,
     // to avoid hammering the Wayback API for unchanged pages.
     if (result.status !== "ok" || !link.last_archive_url) {
-      const archiveUrl = await archiveToWayback(link.url);
-      if (archiveUrl) result.archiveUrl = archiveUrl;
+      const archived = await archiveToWayback(link.url);
+      if (archived.archiveUrl) result.archiveUrl = archived.archiveUrl;
+      result.archiveError = archived.error;
     }
 
     return result;

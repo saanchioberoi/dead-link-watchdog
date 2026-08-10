@@ -28,6 +28,7 @@ async function runDueChecks() {
       `UPDATE links SET
          status = ?, last_checked_at = ?, last_hash = ?, last_snapshot_text = ?,
          last_archive_url = COALESCE(?, last_archive_url),
+         last_archive_error = ?,
          last_ok_at = CASE WHEN ? = 'ok' THEN ? ELSE last_ok_at END
        WHERE id = ?`
     ).run(
@@ -36,6 +37,7 @@ async function runDueChecks() {
       result.hash,
       result.snapshotText,
       result.archiveUrl,
+      result.archiveError,
       result.status,
       now,
       link.id
@@ -48,6 +50,10 @@ async function runDueChecks() {
         ? `Content changed ~${Math.round(result.changeRatio * 100)}%`
         : result.error || null
     );
+
+    if (result.archiveError) {
+      logEvent(link.id, "archive_failed", result.archiveError);
+    }
 
     if (result.status !== "ok") {
       // This is where a real deployment would send an email/push notification.

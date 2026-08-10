@@ -25,6 +25,7 @@ function serializeLink(row) {
     lastCheckedAt: row.last_checked_at,
     lastOkAt: row.last_ok_at,
     lastArchiveUrl: row.last_archive_url,
+    lastArchiveError: row.last_archive_error,
     checkIntervalHours: row.check_interval_hours,
     createdAt: row.created_at,
   };
@@ -83,6 +84,7 @@ app.post("/api/links/:id/check", async (req, res) => {
     `UPDATE links SET
        status = ?, last_checked_at = ?, last_hash = ?, last_snapshot_text = ?,
        last_archive_url = COALESCE(?, last_archive_url),
+       last_archive_error = ?,
        last_ok_at = CASE WHEN ? = 'ok' THEN ? ELSE last_ok_at END
      WHERE id = ?`
   ).run(
@@ -91,6 +93,7 @@ app.post("/api/links/:id/check", async (req, res) => {
     result.hash,
     result.snapshotText,
     result.archiveUrl,
+    result.archiveError,
     result.status,
     now,
     link.id
@@ -103,6 +106,10 @@ app.post("/api/links/:id/check", async (req, res) => {
       ? `Content changed ~${Math.round(result.changeRatio * 100)}%`
       : result.error || null
   );
+
+  if (result.archiveError) {
+    logEvent(link.id, "archive_failed", result.archiveError);
+  }
 
   const updated = db.prepare("SELECT * FROM links WHERE id = ?").get(link.id);
   res.json(serializeLink(updated));

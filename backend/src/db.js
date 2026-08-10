@@ -17,6 +17,7 @@ db.exec(`
     last_hash TEXT,
     last_snapshot_text TEXT,
     last_archive_url TEXT,
+    last_archive_error TEXT,
     check_interval_hours INTEGER NOT NULL DEFAULT 168, -- weekly by default
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
   );
@@ -30,5 +31,13 @@ db.exec(`
     FOREIGN KEY (link_id) REFERENCES links(id) ON DELETE CASCADE
   );
 `);
+
+// Safe migration: if this file already existed from before last_archive_error
+// was added, ALTER it in rather than requiring a manual DB reset.
+try {
+  db.exec("ALTER TABLE links ADD COLUMN last_archive_error TEXT");
+} catch {
+  // column already exists — nothing to do
+}
 
 module.exports = db;

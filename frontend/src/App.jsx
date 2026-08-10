@@ -28,7 +28,9 @@ function StatusBadge({ status }) {
 
 function timeAgo(iso) {
   if (!iso) return "never";
-  const diffMs = Date.now() - new Date(iso + "Z").getTime();
+  // last_checked_at is stored as a full ISO string (already includes Z),
+  // so it should be parsed as-is rather than appending another Z.
+  const diffMs = Date.now() - new Date(iso).getTime();
   const mins = Math.floor(diffMs / 60000);
   if (mins < 1) return "just now";
   if (mins < 60) return `${mins}m ago`;
@@ -220,6 +222,12 @@ export default function App() {
                       view archive
                     </a>
                   </>
+                )}
+                {!link.lastArchiveUrl && link.lastArchiveError && (
+                  <span style={{ color: "#cf222e" }}>
+                    {" · archive failed: "}
+                    {link.lastArchiveError}
+                  </span>
                 )}
               </div>
             </div>

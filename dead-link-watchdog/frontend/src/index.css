@@ -1,0 +1,10 @@
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #f6f8fa;
+}
+button:hover {
+  filter: brightness(0.95);
+}

@@ -1,0 +1,10 @@
+{
+  "name": "dead-link-watchdog",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "build": "cd frontend && npm install && npm run build",
+    "start": "cd backend && npm install && npm start",
+    "postinstall": "npm run build"
+  }
+}
